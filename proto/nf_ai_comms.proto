@@ -1,0 +1,51 @@
+syntax = "proto3";
+
+// Option for the package where generated Java/Groovy classes will reside.
+// Adjust 'com.yourorg.bioflowml' to your actual desired package structure.
+option java_package = "com.yourorg.bioflowml.grpc";
+option java_outer_classname = "NfAiCommsProto"; // Name for the wrapper Java class
+
+// Package for the Protobuf messages themselves.
+// This can also influence the Python module structure if not overridden.
+package nf_ai_comms;
+
+// The service definition for communication.
+service AiActionService {
+  // NfStateObserver sends a TaskObservation, AiActionStreamer replies with an Action.
+  rpc SendTaskObservation (TaskObservation) returns (Action) {}
+}
+
+// Message representing an observation from a Nextflow task.
+message TaskObservation {
+  string event_id = 1;        // Unique ID for this specific observation event
+  string event_type = 2;      // e.g., "task_start", "task_complete"
+  string timestamp_iso = 3;   // ISO 8601 formatted timestamp of the event
+  string pipeline_name = 4;   // Name of the pipeline
+  string process_name = 5;    // Name of the Nextflow process
+  int64  task_id_num = 6;     // Nextflow's numerical task ID
+  string task_hash = 7;       // Nextflow's task hash
+  string task_name = 8;       // Specific task instance name (e.g., "myProcess (1)")
+  string native_id = 9;       // Executor's native job ID (if available)
+  string status = 10;         // Task status (e.g., "RUNNING", "COMPLETED", "FAILED")
+
+  // Fields typically available on task_complete
+  int32 exit_code = 11;
+  int64 duration_ms = 12;
+  int64 realtime_ms = 13;
+  string cpu_percent = 14;    // e.g., "63.5%"
+  int64 peak_rss_bytes = 15;
+  int64 peak_vmem_bytes = 16;
+  int64 read_bytes = 17;
+  int64 write_bytes = 18;
+  // You can add more fields from Nextflow's TaskRun object as needed.
+}
+
+// Message representing an action to be taken, sent back by AiActionStreamer.
+message Action {
+  string observation_event_id = 1; // Echoes the event_id from TaskObservation for correlation
+  string action_id = 2;            // Unique ID for this action
+  string action_details = 3;       // For now, a simple string (e.g., "echo_received")
+                                   // Later, this could be a more structured message.
+  bool   success = 4;              // Indicates if the AiActionStreamer processed the observation successfully
+  string message = 5;              // Optional message from AiActionStreamer
+}
